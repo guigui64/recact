@@ -1,113 +1,325 @@
-import Image from 'next/image'
+"use client";
+
+import { useEffect, useState } from "react";
+import { Activity, Entry } from "./types";
+import { format } from "./utils";
+import { H1, H2, H3 } from "@/components/ui/typo";
+import { Button } from "@/components/ui/button";
+import { Trash, Plus, Pause, Play } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function Home() {
+  const [history, setHistory] = useState<Activity[]>();
+  useEffect(() => {
+    const localHistory = localStorage.getItem("history");
+    if (localHistory) {
+      setHistory(JSON.parse(localHistory));
+    }
+  }, []);
+  useEffect(() => {
+    history && localStorage.setItem("history", JSON.stringify(history));
+  }, [history]);
+
+  const [currentId, setCurrentId] = useState<number>(-1);
+  useEffect(() => {
+    const localCurrentId = localStorage.getItem("currentId");
+    if (localCurrentId) {
+      setCurrentId(JSON.parse(localCurrentId));
+    }
+  }, []);
+  useEffect(() => {
+    currentId >= 0 &&
+      localStorage.setItem("currentId", JSON.stringify(currentId));
+  }, [currentId]);
+
+  const current = history?.find((activity) => activity.id === currentId);
+
+  useEffect(() => {
+    if (history === undefined) return;
+    const id = setInterval(() => {
+      setHistory(
+        history!.map((activity) => {
+          if (activity.id === currentId && activity.entries.length > 0) {
+            const lastEntry = activity.entries[activity.entries.length - 1];
+            lastEntry && lastEntry.running && lastEntry.time++;
+            return {
+              ...activity,
+              entries: [...activity.entries.slice(0, -1), lastEntry],
+            };
+          }
+          return activity;
+        }),
+      );
+    }, 1000);
+    return () => clearInterval(id);
+  }, [currentId, history]);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+    <main className="mx-4">
+      <H1>Recact</H1>
+      <div className="flex gap-2">
+        <Button
+          onClick={() => {
+            const id =
+              history === undefined || history.length === 0
+                ? 1
+                : Math.max(...history.map((activity) => activity.id)) + 1;
+            setCurrentId(id);
+            setHistory([
+              ...(history || []),
+              {
+                id,
+                name: "",
+                entries: [],
+                datetime: Date.now(),
+              },
+            ]);
+          }}
+        >
+          <Plus className="mr-2 h-4 w-4" /> Create a new activity
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={() => {
+            setCurrentId(
+              history?.find((activity) => activity.id !== currentId)?.id || -1,
+            );
+            setHistory(
+              history?.filter((activity) => activity.id !== currentId),
+            );
+          }}
+        >
+          <Trash className="mr-2 h-4 w-4" /> Delete current activity
+        </Button>
+      </div>
+      {current && (
+        <>
+          <H2>Current activity</H2>
+          <div className="flex flex-col items-start gap-2">
+            <Input
+              type="text"
+              placeholder="Activity name"
+              value={current.name}
+              onChange={(event) =>
+                setHistory(
+                  history!.map((activity) => {
+                    if (activity.id === current.id) {
+                      return {
+                        ...activity,
+                        name: event.target.value,
+                      };
+                    }
+                    return activity;
+                  }),
+                )
+              }
             />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+            <H3>Started at {new Date(current.datetime).toLocaleString()}</H3>
+            {current.entries.map((entry, index) => {
+              return (
+                <div className="flex gap-2 items-center" key={entry.id}>
+                  <Input
+                    type="text"
+                    className="w-96"
+                    placeholder="Entry description"
+                    value={entry.desc}
+                    onChange={(event) => {
+                      setHistory(
+                        history!.map((activity) => {
+                          if (activity.id === current.id) {
+                            return {
+                              ...activity,
+                              entries: activity.entries.map((e) => {
+                                if (e.id === entry.id) {
+                                  return {
+                                    ...e,
+                                    desc: event.target.value,
+                                  };
+                                }
+                                return e;
+                              }),
+                            };
+                          }
+                          return activity;
+                        }),
+                      );
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setHistory(
+                        history!.map((activity) => {
+                          if (activity.id === current.id) {
+                            return {
+                              ...activity,
+                              entries: activity.entries.filter(
+                                (e) => e.id !== entry.id,
+                              ),
+                            };
+                          }
+                          return activity;
+                        }),
+                      );
+                    }}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                  {index === current.entries.length - 1 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setHistory(
+                          history!.map((activity) => {
+                            if (activity.id === currentId) {
+                              return {
+                                ...activity,
+                                entries: activity.entries.map((e) => {
+                                  if (e.id === entry.id) {
+                                    return {
+                                      ...e,
+                                      running: !e.running,
+                                    };
+                                  }
+                                  return e;
+                                }),
+                              };
+                            }
+                            return activity;
+                          }),
+                        );
+                      }}
+                    >
+                      {entry.running ? (
+                        <Pause className="h-4 w-4" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
+                  <span>
+                    {format(entry.time)} (@{" "}
+                    {new Date(entry.datetime).toLocaleTimeString()})
+                  </span>
+                </div>
+              );
+            })}
+            <Button
+              onClick={() => {
+                const entry = {
+                  id:
+                    current.entries.length === 0
+                      ? 1
+                      : Math.max(...current.entries.map((e) => e.id)) + 1,
+                  desc: "",
+                  time: 0,
+                  datetime: Date.now(),
+                } as Entry;
+                setHistory(
+                  history!.map((activity) => {
+                    if (activity.id === current.id) {
+                      return {
+                        ...activity,
+                        entries: [
+                          ...activity.entries.map((e) => ({
+                            ...e,
+                            running: false,
+                          })),
+                          { ...entry, running: true },
+                        ],
+                      };
+                    }
+                    return activity;
+                  }),
+                );
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" /> New entry
+            </Button>
+            <H3>
+              Total:{" "}
+              {format(
+                current.entries.reduce((acc, entry) => acc + entry.time, 0),
+              )}
+            </H3>
+            <Table>
+              <TableCaption className="caption-top">
+                {current.name} - started at{" "}
+                {new Date(current.datetime).toLocaleString()}
+              </TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Entry #</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Started time</TableHead>
+                  <TableHead className="text-right">Time</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {current.entries.map((entry, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{index}</TableCell>
+                    <TableCell>{entry.desc}</TableCell>
+                    <TableCell>
+                      {new Date(entry.datetime).toLocaleTimeString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {format(entry.time)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <TableRow>
+                  <TableCell className="font-medium"></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell className="text-right font-bold">
+                    TOTAL{" "}
+                    {format(
+                      current.entries.reduce(
+                        (acc, entry) => acc + entry.time,
+                        0,
+                      ),
+                    )}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
+      <H2>History</H2>
+      {history && (
+        <ul>
+          {history.map((activity) =>
+            activity.id === currentId ? (
+              <li key={activity.id} className="font-bold">
+                {activity.id} {activity.name} -{" "}
+                {new Date(activity.datetime).toLocaleString()}
+              </li>
+            ) : (
+              <li
+                key={activity.id}
+                className="underline hover:cursor-pointer"
+                onClick={() => {
+                  setCurrentId(activity.id);
+                }}
+              >
+                {activity.id} {activity.name} -{" "}
+                {new Date(activity.datetime).toLocaleString()}
+              </li>
+            ),
+          )}
+        </ul>
+      )}
     </main>
-  )
+  );
 }
