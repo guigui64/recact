@@ -7,15 +7,9 @@ import { H1, H2, H3 } from "@/components/ui/typo";
 import { Button } from "@/components/ui/button";
 import { Trash, Plus, Pause, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import Table from "@/components/table";
+import History from "@/components/history";
+import EntryRow from "@/components/entry";
 
 export default function Home() {
   const [history, setHistory] = useState<Activity[]>();
@@ -123,94 +117,70 @@ export default function Home() {
                 )
               }
             />
-            <H3>Started at {new Date(current.datetime).toLocaleString()}</H3>
             {current.entries.map((entry, index) => {
               return (
-                <div className="flex gap-2 items-center" key={entry.id}>
-                  <Input
-                    type="text"
-                    className="w-96"
-                    placeholder="Entry description"
-                    value={entry.desc}
-                    onChange={(event) => {
-                      setHistory(
-                        history!.map((activity) => {
-                          if (activity.id === current.id) {
-                            return {
-                              ...activity,
-                              entries: activity.entries.map((e) => {
-                                if (e.id === entry.id) {
-                                  return {
-                                    ...e,
-                                    desc: event.target.value,
-                                  };
-                                }
-                                return e;
-                              }),
-                            };
-                          }
-                          return activity;
-                        }),
-                      );
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setHistory(
-                        history!.map((activity) => {
-                          if (activity.id === current.id) {
-                            return {
-                              ...activity,
-                              entries: activity.entries.filter(
-                                (e) => e.id !== entry.id,
-                              ),
-                            };
-                          }
-                          return activity;
-                        }),
-                      );
-                    }}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                  {index === current.entries.length - 1 && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setHistory(
-                          history!.map((activity) => {
-                            if (activity.id === currentId) {
-                              return {
-                                ...activity,
-                                entries: activity.entries.map((e) => {
-                                  if (e.id === entry.id) {
-                                    return {
-                                      ...e,
-                                      running: !e.running,
-                                    };
-                                  }
-                                  return e;
-                                }),
-                              };
-                            }
-                            return activity;
-                          }),
-                        );
-                      }}
-                    >
-                      {entry.running ? (
-                        <Pause className="h-4 w-4" />
-                      ) : (
-                        <Play className="h-4 w-4" />
-                      )}
-                    </Button>
-                  )}
-                  <span>
-                    {format(entry.time)} (@{" "}
-                    {new Date(entry.datetime).toLocaleTimeString()})
-                  </span>
-                </div>
+                <EntryRow
+                  key={entry.id}
+                  entry={entry}
+                  onEditDesc={(desc) => {
+                    setHistory(
+                      history!.map((activity) => {
+                        if (activity.id === current.id) {
+                          return {
+                            ...activity,
+                            entries: activity.entries.map((e) => {
+                              if (e.id === entry.id) {
+                                return {
+                                  ...e,
+                                  desc,
+                                };
+                              }
+                              return e;
+                            }),
+                          };
+                        }
+                        return activity;
+                      }),
+                    );
+                  }}
+                  onDelete={() => {
+                    setHistory(
+                      history!.map((activity) => {
+                        if (activity.id === current.id) {
+                          return {
+                            ...activity,
+                            entries: activity.entries.filter(
+                              (e) => e.id !== entry.id,
+                            ),
+                          };
+                        }
+                        return activity;
+                      }),
+                    );
+                  }}
+                  onPlayPause={() => {
+                    setHistory(
+                      history!.map((activity) => {
+                        if (activity.id === currentId) {
+                          return {
+                            ...activity,
+                            entries: activity.entries.map((e) => {
+                              if (e.id === entry.id) {
+                                return {
+                                  ...e,
+                                  running: !e.running,
+                                };
+                              }
+                              return e;
+                            }),
+                          };
+                        }
+                        return activity;
+                      }),
+                    );
+                  }}
+                  last={index === current.entries.length - 1}
+                />
               );
             })}
             <Button
@@ -245,80 +215,17 @@ export default function Home() {
             >
               <Plus className="mr-2 h-4 w-4" /> New entry
             </Button>
-            <H3>
-              Total:{" "}
-              {format(
-                current.entries.reduce((acc, entry) => acc + entry.time, 0),
-              )}
-            </H3>
-            <Table>
-              <TableCaption className="caption-top">
-                {current.name} - started at{" "}
-                {new Date(current.datetime).toLocaleString()}
-              </TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Entry #</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Started time</TableHead>
-                  <TableHead className="text-right">Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {current.entries.map((entry, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{index}</TableCell>
-                    <TableCell>{entry.desc}</TableCell>
-                    <TableCell>
-                      {new Date(entry.datetime).toLocaleTimeString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {format(entry.time)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow>
-                  <TableCell className="font-medium"></TableCell>
-                  <TableCell></TableCell>
-                  <TableCell></TableCell>
-                  <TableCell className="text-right font-bold">
-                    TOTAL{" "}
-                    {format(
-                      current.entries.reduce(
-                        (acc, entry) => acc + entry.time,
-                        0,
-                      ),
-                    )}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            {current.entries.length > 0 && <Table activity={current} />}
           </div>
         </>
       )}
       <H2>History</H2>
       {history && (
-        <ul>
-          {history.map((activity) =>
-            activity.id === currentId ? (
-              <li key={activity.id} className="font-bold">
-                {activity.id} {activity.name} -{" "}
-                {new Date(activity.datetime).toLocaleString()}
-              </li>
-            ) : (
-              <li
-                key={activity.id}
-                className="underline hover:cursor-pointer"
-                onClick={() => {
-                  setCurrentId(activity.id);
-                }}
-              >
-                {activity.id} {activity.name} -{" "}
-                {new Date(activity.datetime).toLocaleString()}
-              </li>
-            ),
-          )}
-        </ul>
+        <History
+          history={history}
+          currentId={currentId}
+          setCurrentId={setCurrentId}
+        />
       )}
     </main>
   );
