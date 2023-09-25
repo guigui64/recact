@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { Activity, Entry } from "./types";
-import { format } from "./utils";
-import { H1, H2, H3 } from "@/components/ui/typo";
+import { H1, H2 } from "@/components/ui/typo";
 import { Button } from "@/components/ui/button";
 import { Trash, Plus, Pause, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Table from "@/components/table";
 import History from "@/components/history";
 import EntryRow from "@/components/entry";
+import Link from "next/link";
 
 export default function Home() {
   const [history, setHistory] = useState<Activity[]>();
@@ -216,6 +216,15 @@ export default function Home() {
               <Plus className="mr-2 h-4 w-4" /> New entry
             </Button>
             {current.entries.length > 0 && <Table activity={current} />}
+            {current.entries.length > 0 && (
+              <Button asChild>
+                <Link
+                  href={`/report?activity=${btoa(JSON.stringify(current))}`}
+                >
+                  See report
+                </Link>
+              </Button>
+            )}
           </div>
         </>
       )}
