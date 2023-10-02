@@ -7,8 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Activity } from "@/app/types";
-import { format } from "@/app/utils";
+import { Activity } from "@/lib/types";
+import { format } from "@/lib/utils";
 
 export default function ActivityTable({ activity }: { activity: Activity }) {
   return (

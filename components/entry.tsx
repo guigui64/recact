@@ -1,5 +1,4 @@
-import { Entry } from "@/app/types";
-import { format } from "@/app/utils";
+import { Entry } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash, Pause, Play } from "lucide-react";
@@ -28,11 +27,7 @@ export default function Entry({
           onEditDesc(event.target.value);
         }}
       />
-      <Button
-        variant="outline"
-        className="text-red-500 border-red-500 dark:text-red-700 dark:border-red-700"
-        onClick={onDelete}
-      >
+      <Button variant="outlineDestructive" onClick={onDelete}>
         <Trash className="h-4 w-4" />
       </Button>
       {last && (

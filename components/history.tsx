@@ -1,4 +1,4 @@
-import { Activity } from "@/app/types";
+import { Activity } from "@/lib/types";
 
 export default function History({
   history,
