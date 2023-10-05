@@ -1,16 +1,23 @@
 "use client";
 
-import { H1, H2 } from "@/components/ui/typo";
+import { useState } from "react";
+import { Trash, Plus, Clipboard, ExternalLink } from "lucide-react";
+import { H2 } from "@/components/ui/typo";
 import { Button } from "@/components/ui/button";
-import { Trash, Plus, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Table from "@/components/table";
 import History from "@/components/history";
-import EntryRow from "@/components/entry";
-import Link from "next/link";
 import useActivities from "@/hooks/use-activities";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/use-toast";
+import useHydrated from "@/hooks/use-mounted";
+import { ToastAction } from "@/components/ui/toast";
 
 export default function Home() {
+  const hydrated = useHydrated();
+  const [editable, setEditable] = useState(true);
+  const { toast } = useToast();
   const {
     history,
     currentId,
@@ -23,58 +30,81 @@ export default function Home() {
     deleteEntry,
     toggleRunning,
     addEntry,
+    pause,
   } = useActivities();
+  if (!hydrated) return null;
   return (
-    <main className="mx-4">
-      <H1>Recact</H1>
+    <section>
       <div className="flex gap-2">
         <Button onClick={createActivity}>
           <Plus className="mr-2 h-4 w-4" /> Create a new activity
         </Button>
         <Button
           variant="destructive"
-          disabled={history.length === 0}
+          disabled={!hydrated || history.length === 0}
           onClick={deleteCurrent}
         >
           <Trash className="mr-2 h-4 w-4" /> Delete current activity
         </Button>
+        {current && current.entries.length > 0 && (
+          <Button
+            onClick={() => {
+              const url =
+                window.location +
+                `report?activity=${btoa(JSON.stringify(current))}`;
+              navigator.clipboard.writeText(url);
+              toast({
+                title: "URL copied to clipboard",
+                action: (
+                  <ToastAction
+                    altText="Open link in a new page"
+                    onClick={() => window.open(url)}
+                  >
+                    <ExternalLink />
+                  </ToastAction>
+                ),
+              });
+            }}
+          >
+            <Clipboard className="mr-2 h-4 w-4" />
+            Get report link
+          </Button>
+        )}
       </div>
       {current && (
         <>
           <H2>Current activity</H2>
-          <div className="flex flex-col items-start gap-2">
-            <Input
-              type="text"
-              placeholder="Activity name"
-              value={current.name}
-              onChange={(event) => setCurrentName(event.target.value)}
-            />
-            {current.entries.map((entry, index) => {
-              return (
-                <EntryRow
-                  key={entry.id}
-                  entry={entry}
-                  onEditDesc={(desc) => setEntryDescription(entry.id, desc)}
-                  onDelete={() => deleteEntry(entry.id)}
-                  onPlayPause={() => toggleRunning(entry.id)}
-                  last={index === current.entries.length - 1}
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                className="grow"
+                placeholder="Activity name"
+                value={current.name}
+                onChange={(event) => setCurrentName(event.target.value)}
+              />
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="editable"
+                  checked={editable}
+                  onCheckedChange={(c) => {
+                    setEditable(c);
+                    pause();
+                  }}
                 />
-              );
-            })}
-            <Button onClick={addEntry}>
-              <Plus className="mr-2 h-4 w-4" /> New entry
-            </Button>
-            {current.entries.length > 0 && <Table activity={current} />}
-            {current.entries.length > 0 && (
-              <Button asChild>
-                <Link
-                  href={`/report?activity=${btoa(JSON.stringify(current))}`}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Open and share report
-                </Link>
-              </Button>
-            )}
+                <Label htmlFor="editable" className="whitespace-nowrap">
+                  Enable editing
+                </Label>
+              </div>
+            </div>
+            <Table
+              editable={editable}
+              activity={current}
+              setEntryDescription={setEntryDescription}
+              deleteEntry={deleteEntry}
+              toggleRunning={toggleRunning}
+              addEntry={addEntry}
+            />
           </div>
         </>
       )}
@@ -86,6 +116,6 @@ export default function Home() {
           setCurrentId={setCurrentId}
         />
       )}
-    </main>
+    </section>
   );
 }

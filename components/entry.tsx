@@ -20,7 +20,7 @@ export default function Entry({
     <div className="flex gap-2 items-center">
       <Input
         type="text"
-        className="w-96"
+        // className="w-96"
         placeholder="Entry description"
         value={entry.desc}
         onChange={(event) => {

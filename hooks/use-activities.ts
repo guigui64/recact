@@ -175,6 +175,19 @@ export default function useActivities() {
     );
   }, [currentId, history, setHistory]);
 
+  const pause = useCallback(() => {
+    setHistory(
+      produce(history, (draftHistory) => {
+        const currentActivity = draftHistory.find(
+          (activity) => activity.id === currentId,
+        );
+        if (currentActivity) {
+          currentActivity.entries.forEach((entry) => (entry.running = false));
+        }
+      }),
+    );
+  }, [currentId, history, setHistory]);
+
   return {
     history,
     currentId,
@@ -187,5 +200,6 @@ export default function useActivities() {
     deleteEntry,
     toggleRunning,
     addEntry,
+    pause,
   };
 }
