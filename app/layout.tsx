@@ -29,6 +29,16 @@ export default function RootLayout({
               </Link>
             </nav>
             {children}
+            <footer className="my-8 text-sm flex justify-center text-muted-foreground">
+              Built with ❤️ by
+              <Link
+                href="https://guillaumecomte.deno.dev"
+                className="ml-1 hover:text-red-500"
+                target="_blank"
+              >
+                Guillaume Comte
+              </Link>
+            </footer>
           </main>
           <Toaster />
         </ThemeProvider>
