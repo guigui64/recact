@@ -60,7 +60,7 @@ export default function ActivityTable({
                 entry.desc
               )}
             </TableCell>
-            <TableCell>
+            <TableCell className="whitespace-nowrap">
               {new Date(entry.datetime).toLocaleTimeString()}
             </TableCell>
             <TableCell className="text-right">{format(entry.time)}</TableCell>
